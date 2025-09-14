@@ -1,4 +1,6 @@
 Flask
 twilio
 Flask-CORS
+gunicorn
+
 python-dotenv
