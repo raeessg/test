@@ -1,0 +1,4 @@
+Flask
+twilio
+Flask-CORS
+python-dotenv

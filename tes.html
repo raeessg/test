@@ -3,60 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Device Sensor Access</title>
+    <title>Accident Alert System</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             padding: 20px;
             background-color: #f0f2f5;
             color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
         }
         h1, h2 {
             color: #0056b3;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 10px;
         }
         .sensor-data {
-            font-size: 1.2rem;
-            line-height: 1.6;
+            font-size: 1.1rem;
+            line-height: 1.7;
             background-color: #e9ecef;
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 8px;
             margin-top: 10px;
+            font-family: 'Courier New', Courier, monospace;
         }
         button {
             font-size: 1rem;
             padding: 12px 20px;
             cursor: pointer;
-            background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             margin-top: 20px;
-            transition: background-color 0.3s;
+            width: 100%;
+            transition: background-color 0.3s, transform 0.1s;
         }
-        button:hover {
+        button:active {
+            transform: scale(0.98);
+        }
+        #startButton {
+             background-color: #007bff;
+        }
+        #startButton:hover {
             background-color: #0056b3;
         }
+        #sendAlertButton {
+            background-color: #dc3545; /* Red for alert */
+        }
+        #sendAlertButton:hover {
+            background-color: #c82333;
+        }
         #status {
-            margin-top: 15px;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
             font-style: italic;
             color: #666;
+            background-color: #f8f9fa;
+        }
+        input[type="tel"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            margin-top: 20px;
+            box-sizing: border-box; /* Important for padding */
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Device Sensor Data</h1>
-        <p>Click the button below to request permission and start reading sensor data.</p>
+        <h1>Accident g Alert System</h1>
+        <p>Click "Activate" to begin monitoring your device's sensors and location.</p>
         
-        <button id="startButton">Start Reading Sensors</button>
+        <button id="startButton">Activate System</button>
+
+        <input type="tel" id="emergencyNumber" placeholder="Enter Emergency WhatsApp Number (e.g., +91...)" />
+        
+        <button id="sendAlertButton" style="display: none;">SEND EMERGENCY ALERT</button>
 
         <h2 style="margin-top: 30px;">Accelerometer</h2>
         <div id="accelData" class="sensor-data">
@@ -72,26 +108,38 @@
             Z: Not available
         </div>
 
-        <p id="status">Status: Idle. Click the button to begin.</p>
+        <h2 style="margin-top: 30px;">GPS Location</h2>
+        <div id="gpsData" class="sensor-data">
+            Latitude: Not available<br>
+            Longitude: Not available
+        </div>
+
+        <p id="status">Status: System is idle.</p>
     </div>
 
     <script>
         const startButton = document.getElementById('startButton');
+        const sendAlertButton = document.getElementById('sendAlertButton');
+        const emergencyNumberInput = document.getElementById('emergencyNumber');
         const accelDataDiv = document.getElementById('accelData');
         const gyroDataDiv = document.getElementById('gyroData');
+        const gpsDataDiv = document.getElementById('gpsData');
         const statusDiv = document.getElementById('status');
 
+        let currentLatitude = null;
+        let currentLongitude = null;
+
         startButton.onclick = () => {
-            statusDiv.textContent = 'Requesting sensor permissions...';
+            statusDiv.textContent = 'Requesting permissions...';
+            startButton.disabled = true;
+            startButton.textContent = 'System Active';
 
             // --- Accelerometer ---
             try {
                 const accelerometer = new Accelerometer({ frequency: 60 });
-                
                 accelerometer.addEventListener('error', event => {
-                    statusDiv.innerHTML += `<br>Error: Accelerometer not found or permission denied. ${event.error.name}, ${event.error.message}`;
+                    statusDiv.innerHTML += `<br>Error: Accelerometer not found or permission denied.`;
                 });
-                
                 accelerometer.addEventListener('reading', () => {
                     accelDataDiv.innerHTML = `
                         X: ${accelerometer.x.toFixed(2)}<br>
@@ -99,21 +147,17 @@
                         Z: ${accelerometer.z.toFixed(2)}
                     `;
                 });
-                
                 accelerometer.start();
             } catch (error) {
-                 statusDiv.innerHTML += `<br>Accelerometer could not be initialized. Maybe your browser doesn't support it.`;
+                 statusDiv.innerHTML += `<br>Accelerometer could not be initialized. Try on a mobile device.`;
             }
-
 
             // --- Gyroscope ---
             try {
                 const gyroscope = new Gyroscope({ frequency: 60 });
-                
                 gyroscope.addEventListener('error', event => {
-                    statusDiv.innerHTML += `<br>Error: Gyroscope not found or permission denied. ${event.error.name}, ${event.error.message}`;
+                    statusDiv.innerHTML += `<br>Error: Gyroscope not found or permission denied.`;
                 });
-                
                 gyroscope.addEventListener('reading', () => {
                     gyroDataDiv.innerHTML = `
                         X: ${gyroscope.x.toFixed(2)}<br>
@@ -121,18 +165,84 @@
                         Z: ${gyroscope.z.toFixed(2)}
                     `;
                 });
- 
                 gyroscope.start();
             } catch (error) {
-                 statusDiv.innerHTML += `<br>Gyroscope could not be initialized. Maybe your browser doesn't support it.`;
+                 statusDiv.innerHTML += `<br>Gyroscope could not be initialized.`;
+            }
+            
+            // --- Geolocation (GPS) ---
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        currentLatitude = position.coords.latitude;
+                        currentLongitude = position.coords.longitude;
+                        gpsDataDiv.innerHTML = `
+                            Latitude: ${currentLatitude.toFixed(6)}<br>
+                            Longitude: ${currentLongitude.toFixed(6)}
+                        `;
+                        statusDiv.innerHTML += '<br>GPS Location acquired successfully.';
+                        sendAlertButton.style.display = 'block';
+                    }, 
+                    (error) => {
+                        const errorMessage = "Error: Could not get location. " + error.message;
+                        gpsDataDiv.textContent = errorMessage;
+                        statusDiv.innerHTML += `<br>${errorMessage}`;
+                    }
+                );
+            } else {
+                const errorMessage = 'Geolocation is not supported by your browser.';
+                gpsDataDiv.textContent = errorMessage;
+                statusDiv.innerHTML += `<br>${errorMessage}`;
             }
 
-            if(typeof(Accelerometer) !== 'undefined' || typeof(Gyroscope) !== 'undefined') {
-                statusDiv.textContent = 'Status: Reading sensor data... Move your device to see the values change.';
-                startButton.disabled = true;
-                startButton.textContent = 'Sensors Active';
+            statusDiv.textContent = 'Status: Monitoring sensor data... Move your device to see values change.';
+        };
+
+        sendAlertButton.onclick = () => {
+            const emergencyNumber = emergencyNumberInput.value;
+
+            if (!emergencyNumber) {
+                statusDiv.textContent = 'Please enter an emergency contact number first!';
+                return;
+            }
+
+            if (currentLatitude && currentLongitude) {
+                statusDiv.textContent = 'Sending alert to your server...';
+                
+                fetch('http://127.0.0.1:5000/send-sms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lat: currentLatitude,
+                        lon: currentLongitude,
+                        to: emergencyNumber 
+                    }),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                         statusDiv.textContent = `Alert sent successfully! Message SID: ${data.sid}`;
+                    } else {
+                        throw new Error(data.error || 'Unknown error from server.');
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    statusDiv.textContent = `Failed to send alert. Make sure your local server is running. Error: ${error.message}`;
+                });
+
+            } else {
+                statusDiv.textContent = 'Cannot send alert. Location not available.';
             }
         };
     </script>
 </body>
 </html>
+
